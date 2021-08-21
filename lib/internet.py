@@ -205,9 +205,18 @@ def _pick_wireless_interface() -> Union[Interface, Literal[False]]:
         print(F"{constants.ERROR_COLOR}There are no found active wireless interfaces!")
         choice = inquirer.shortcuts.list_input(
             "How do you want to continue?",
-            choice=["Drop to shell and fix the issue", "Proceed with Ethernet"]
+            choices=[
+                "Try to fix the issue",
+                "Drop to shell and fix the issue",
+                "Proceed with Ethernet",
+            ]
         )
-        if choice == "Drop to shell and fix the issue":
+        if choice == "Try to fix the issue":
+            if not _ensure_active_interface("WIRELESS"):
+                print(f"{constants.ERROR_COLOR}Failed to bring any wireless interfaces UP! Can't pick an interface.")
+            # Run this even if we fail, so that we get the inquirer prompt again
+            return _pick_wireless_interface()
+        elif choice == "Drop to shell and fix the issue":
             commands.drop_to_shell()
             return _pick_wireless_interface()
         else:
