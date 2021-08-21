@@ -75,7 +75,6 @@ def unblock_rfkill():
     """Check if any of the interfaces are blocked with RF-KILL, if so, unblock them."""
     proc = commands.run_root_cmd("rfkill --json", capture_out=True)
     rfkill_out = json.loads(proc.stdout.decode())
-    print(rfkill_out)
 
     for device_list in rfkill_out.values():
         for device in device_list:
@@ -256,17 +255,17 @@ def connect_wifi() -> bool:
             "this is to be expected if running from live ISO. Using iwctl instead."
         )
 
-        active_interface = _get_active_wireless_interface()
+        active_interface: Union[Literal[False], Interface] = _get_active_wireless_interface()  # type: ignore
         if active_interface is False:
             # We gave up wireless connection due to inavailable network interface, use ethernet instead
             return connect_ethernet()
 
         while not check_connection():
             # Attempt to find some networks
-            print(f"{constants.NOTE_COLOR}Scanning for networks with {active_interface}, waiting 5s for results...")
-            commands.run_cmd(f"iwctl station {active_interface} scan")
+            print(f"{constants.NOTE_COLOR}Scanning for networks with {active_interface.name}, waiting 5s...")
+            commands.run_cmd(f"iwctl station {active_interface.name} scan")
             time.sleep(5)
-            proc = commands.run_cmd(f"iwctl station {active_interface} get-networks rssi-dbms", capture_out=True)
+            proc = commands.run_cmd(f"iwctl station {active_interface.name} get-networks rssi-dbms", capture_out=True)
             proc_out = proc.stdout.decode()
             network_lines = proc_out.splitlines()[4:]
 
@@ -298,7 +297,7 @@ def connect_wifi() -> bool:
                     choices=[network[0] for network in networks]
                 )
 
-                commands.run_cmd(f"iwctl station {active_interface} connect '{ssid}'")
+                commands.run_cmd(f"iwctl station {active_interface.name} connect '{ssid}'")
                 time.sleep(5)
                 while not check_connection():
                     print(f"{constants.ERROR_COLOR}Internet connection still not available!")
@@ -348,7 +347,7 @@ def connect_wifi() -> bool:
 def connect_internet() -> bool:
     if not check_connection():
         commands.run_cmd("clear", enable_debug=False)
-        print(f"{constants.ERROR_COLOR}Internet connection not working!")
+        print(f"{constants.WARN_COLOR}Device is currently not connected to the internet, connecting!")
 
         # wireless adapters are often soft-blocked with RF-KILL, unblock everything first
         unblock_rfkill()
