@@ -369,7 +369,6 @@ def connect_wifi() -> bool:
 
 def connect_internet() -> bool:
     if not check_connection():
-        commands.run_cmd("clear", enable_debug=False)
         print(f"{constants.WARN_COLOR}Device is currently not connected to the internet, connecting!")
 
         # wireless adapters are often soft-blocked with RF-KILL, unblock everything first
