@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess
 
 import inquirer.shortcuts
@@ -23,6 +24,11 @@ def run_cmd(cmd: str, capture_out: bool = False, enable_debug: bool = True) -> s
     args = {}
     if capture_out:
         args.update({"stdout": subprocess.PIPE, "stderr": subprocess.STDOUT})
+    else:
+        # If we aren't capturing output, it will be eachoed, this however won't reset colorama's color
+        # which we don't want, the command output should always be without any special coloring
+        sys.stdout.write(constants.RESET_COLOR)
+        sys.stdout.flush()
 
     if not enable_debug or debug_confirm_run(cmd):
         return subprocess.run(cmd, shell=True, **args)
