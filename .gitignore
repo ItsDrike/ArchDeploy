@@ -1,0 +1,21 @@
+# Byte-compiled / optimized / DLL Files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Editor project settions
+## VSCode
+.vscode/
+## PyCharm intellij
+.idea/
+## repl.it
+.replit
+## Spyder
+.spyproject/
+.spyderproject/
+
+# Backup files
+*.bak
+
+# Personal TODO files
+TODO
