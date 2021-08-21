@@ -267,7 +267,7 @@ def connect_wifi() -> bool:
             time.sleep(5)
             proc = commands.run_cmd(f"iwctl station {active_interface.name} get-networks rssi-dbms", capture_out=True)
             proc_out = proc.stdout.decode()
-            network_lines = proc_out.splitlines()[4:]
+            network_lines = proc_out.splitlines()[5:]
 
             # If we didn't found any networks, let user go to shell or use ethernet
             if len(network_lines) == 0:
