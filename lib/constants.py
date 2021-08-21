@@ -14,3 +14,4 @@ INFO_COLOR = colorama.Style.NORMAL + colorama.Fore.CYAN
 NOTE_COLOR = colorama.Style.DIM + colorama.Fore.RESET
 DEBUG_COLOR = colorama.Style.NORMAL + colorama.Fore.BLUE
 CMD_COLOR = colorama.Style.NORMAL + colorama.Fore.MAGENTA
+RESET_COLOR = colorama.Style.RESET_ALL + colorama.Fore.RESET
