@@ -5,6 +5,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Literal, Union
+import textwrap
 
 import inquirer.shortcuts
 
@@ -267,7 +268,7 @@ def connect_wifi() -> bool:
             time.sleep(5)
             proc = commands.run_cmd(f"iwctl station {active_interface.name} get-networks rssi-dbms", capture_out=True)
             proc_out = proc.stdout.decode()
-            network_lines = proc_out.splitlines()[5:]
+            network_lines = [textwrap.dedent(line) for line in proc_out.splitlines()[4:] if len(line) != 0]
 
             # If we didn't found any networks, let user go to shell or use ethernet
             if len(network_lines) == 0:
@@ -319,7 +320,7 @@ def connect_wifi() -> bool:
                         break
                     elif choice == "Drop to interactive iwctl":
                         print(
-                            f"{constants.INFO_COLOR}After you're done, use {constants.CMD_COLOR}exit"
+                            f"{constants.INFO_COLOR}After you're done, use {constants.CMD_COLOR}exit "
                             f"{constants.INFO_COLOR}to go back, to display iwctl help, use {constants.CMD_COLOR}help"
                         )
                         commands.run_cmd("iwctl")
