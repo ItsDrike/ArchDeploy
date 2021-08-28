@@ -48,5 +48,7 @@ class ColorAutoresettingStream:
 
 
 # Ensure automatic color reset after writing to any of these buffers
-sys.stdout = ColorAutoresettingStream(sys.stdout)
-sys.stderr = ColorAutoresettingStream(sys.stderr)
+if not isinstance(sys.stdout, ColorAutoresettingStream):
+    sys.stdout = ColorAutoresettingStream(sys.stdout)
+if not isinstance(sys.stderr, ColorAutoresettingStream):
+    sys.stderr = ColorAutoresettingStream(sys.stderr)
