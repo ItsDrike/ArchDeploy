@@ -7,9 +7,7 @@ from pathlib import Path
 from typing import Literal, Union
 import textwrap
 
-import inquirer.shortcuts
-
-from lib import commands, constants
+from lib import commands, constants, questions
 
 
 class Interface:
@@ -106,7 +104,7 @@ def connect_ethernet(wait_time: int = 20, iteration_time: int = 2) -> bool:
     if not check_connection():
         # The ethernet cable wasn't plugged in within the time limit
         while True:
-            choice = inquirer.shortcuts.list_input(
+            choice = questions.choice(
                 "Internet connection still isn't available, how do you want to continue?",
                 choices=[
                     "Drop to shell and connect manually",
@@ -141,7 +139,7 @@ def _ensure_active_interface(interface_type: Union[Literal["WIRELESS"], Literal[
     interfaces = [interface for interface in Interface.get_interfaces() if interface.type == interface_type]
     if len(interfaces) == 0:
         print(f"{constants.ERROR_COLOR}Couldn't find any interface of {interface_type} type!")
-        choice = inquirer.shortcuts.list_input(
+        choice = questions.choice(
             "How do you wish to proceed?",
             choices=["Drop to shell and correct this", f"Give up on {interface_type} type"]
         )
@@ -154,14 +152,14 @@ def _ensure_active_interface(interface_type: Union[Literal["WIRELESS"], Literal[
     # Make sure that at least one interface of given type is UP
     while not any(interface.is_up() for interface in interfaces):
         print(f"{constants.ERROR_COLOR}All {interface_type} interfaces are DOWN.")
-        bring_up = inquirer.shortcuts.checkbox(
+        bring_up = questions.multi_choice(
             "Choose which interfaces to bring UP (spacebar to select, enter to confirm):",
             choices=[interface.name for interface in interfaces]
         )
         # User didn't pick any interfaces to bring up
         if len(bring_up) == 0:
             print(f"{constants.ERROR_COLOR}You didn't choose any interface(s) to bring up!")
-            choice = inquirer.shortcuts.list_input(
+            choice = questions.choice(
                 "How do you wish to continue?",
                 choices=["Choose again", f"Give up on {interface_type} type"]
             )
@@ -176,7 +174,7 @@ def _ensure_active_interface(interface_type: Union[Literal["WIRELESS"], Literal[
             commands.run_root_cmd(f"ip link set {interface.name} up")
             while not interface.is_up():
                 print(f"{constants.ERROR_COLOR}Failed to bring interface {interface.name} UP!")
-                choice = inquirer.shortcuts.list_input(
+                choice = questions.choice(
                     "How do you wish to continue?",
                     choices=[
                         f"Drop to shell and bring the interface {interface.name} UP manually",
@@ -203,7 +201,7 @@ def _pick_wireless_interface() -> Union[Interface, Literal[False]]:
 
     if len(active_interfaces) == 0:
         print(F"{constants.ERROR_COLOR}There are no found active wireless interfaces!")
-        choice = inquirer.shortcuts.list_input(
+        choice = questions.choice(
             "How do you want to continue?",
             choices=[
                 "Try to fix the issue",
@@ -224,7 +222,7 @@ def _pick_wireless_interface() -> Union[Interface, Literal[False]]:
     elif len(active_interfaces) == 1:
         return wireless_interfaces[0]
     else:
-        choice = inquirer.shortcuts.list_input(
+        choice = questions.choice(
             "There are multiple wireless interfaces which are UP, "
             "choose which interface should be use to make the connection.",
             choices=[interface.name for interface in active_interfaces]
@@ -256,7 +254,7 @@ def _iwctl_connect(interface: Interface) -> bool:
         networks.append(line.rsplit(maxsplit=2))
 
     # Let user pick the network to connect to (from SSIDs)
-    ssid = inquirer.shortcuts.list_input(
+    ssid = questions.choice(
         "Which network do you wish to connect to (you'll be prompted for the password, if it has one)",
         choices=[network[0] for network in networks]
     )
@@ -284,7 +282,7 @@ def connect_wifi() -> bool:
         commands.run_cmd("nmtui")
         while not check_connection():
             print(f"{constants.ERROR_COLOR}Internet connection still isn't available")
-            opt = inquirer.shortcuts.list_input(
+            opt = questions.choice(
                 "How do you wish to proceed?",
                 choices=[
                     "Retry with nmtui",
@@ -322,7 +320,7 @@ def connect_wifi() -> bool:
         _iwctl_connect(active_interface)
         while not connect_ethernet():
             print(f"{constants.ERROR_COLOR}Internet connection still not available!")
-            choice = inquirer.shortcuts.list_input(
+            choice = questions.choice(
                 "How do you wish to continue?",
                 choices=[
                     "Drop to shell and connect manually",
@@ -353,7 +351,7 @@ def connect_wifi() -> bool:
     # We will only get here if nmtui wasn't installed/failed and iwctl wasn't installed
     print(f"{constants.ERROR_COLOR}Neither nmtui nor iwctl commands are available. Can't handle wifi connection!")
     while True:
-        choice = inquirer.shortcuts.list_input(
+        choice = questions.choice(
             "How do you wish to continue?",
             choices=["Drop to shell and connect manually", "Proceed with Ethernet"]
         )
@@ -374,7 +372,7 @@ def connect_internet() -> bool:
         # wireless adapters are often soft-blocked with RF-KILL, unblock everything first
         unblock_rfkill()
 
-        connect_opt = inquirer.shortcuts.list_input(
+        connect_opt = questions.choice(
             "How do you wish to connect to internet?",
             choices=["Wi-Fi", "Ethernet"]
         )

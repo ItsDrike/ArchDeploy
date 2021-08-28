@@ -1,9 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
-from lib import constants, commands
-
-import inquirer.shortcuts
+from lib import constants, commands, questions
 
 
 class Partition:
@@ -29,30 +27,29 @@ def get_partition_scheme() -> list[Partition]:
     Output will be stored in a dictionary
     """
     part_scheme = []
-    root_partition = inquirer.shortcuts.path(
-        f"Enter {constants.CMD_COLOR}/{constants.RESET_COLOR} partition path (usually /dev/sdXY): ",
-        exists=True
+    root_partition = questions.path(
+        f"Enter {constants.CMD_COLOR}/{constants.RESET_COLOR} partition path (usually /dev/sdXY)",
     )
-    part_scheme.append(Partition(Path(root_partition), mountpoint=Path("/")))
+    part_scheme.append(Partition(root_partition, mountpoint=Path("/")))
 
     if constants.IS_EFI:
-        efi_partition = inquirer.shortcuts.path("Enter the partition path for the EFI partition.")
-        efi_mountpoint = inquirer.shortcuts.list_input(
+        efi_partition = questions.path("Enter the partition path for the EFI partition.")
+        efi_mountpoint = questions.choice(
             "Which mountpoint do you want to use for the EFI partition?",
-            choices=["/boot", "/efi", "Other"]
+            choices=[Path("/boot"), Path("/efi"), "Other"]
         )
         if efi_mountpoint == "Other":
-            efi_mountpoint = inquirer.shortcuts.path("Enter the EFI mountpoint path: ")
-        part_scheme.append(Partition(Path(efi_partition), mountpoint=Path(efi_mountpoint)))
+            efi_mountpoint = questions.path("Enter the EFI mountpoint path: ", exists=False)
+        part_scheme.append(Partition(efi_partition, mountpoint=efi_mountpoint))
 
-    if inquirer.shortcuts.confirm("Do you want swap partition?"):
-        swap_partition = inquirer.shortcuts.path("Enter swap partition path (usually /dev/sdXY): ")
-        part_scheme.append(Partition(Path(swap_partition, is_swap=True)))
+    if questions.confirm("Do you want swap partition?"):
+        swap_partition = questions.path("Enter swap partition path (usually /dev/sdXY): ")
+        part_scheme.append(Partition(swap_partition, is_swap=True))
 
     while True:
-        if inquirer.shortcuts.confirm("Do you want to define some other mountpoint?"):
-            mountpoint = Path(inquirer.shortcuts.path("Enter the mountpoint (on new machine): "))
-            partition = Path(inquirer.shortcuts.path("Enter the partition path (usually /dev/sdXY): "))
+        if questions.confirm("Do you want to define some other mountpoint?"):
+            mountpoint = questions.path("Enter the mountpoint (on new machine): ", exists=False)
+            partition = questions.path("Enter the partition path (usually /dev/sdXY): ")
 
             for existing_partition in part_scheme:
                 if existing_partition.path == partition:
@@ -68,7 +65,7 @@ def get_partition_scheme() -> list[Partition]:
             break
 
     print(f"{constants.INFO_COLOR}Your current partition table scheme:\n{part_scheme}")
-    if inquirer.shortcuts.confirm("Does this look correct?"):
+    if questions.confirm("Does this look correct?"):
         return part_scheme
     else:
         print(f"{constants.INFO_COLOR}Re-running mountpoint obtainer")

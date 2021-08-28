@@ -2,15 +2,13 @@ import os
 import sys
 import subprocess
 
-import inquirer.shortcuts
-
-from lib import constants
+from lib import constants, questions
 
 
 def debug_confirm_run(command: str) -> bool:
     """If DEBUG is on, ask user for confirmation to run given command."""
     if constants.DEBUG:
-        cnfrm: bool = inquirer.shortcuts.confirm(  # type: ignore
+        cnfrm: bool = questions.confirm(  # type: ignore
             f"{constants.DEBUG_COLOR}[DEBUG] Running command: "
             f"{constants.CMD_COLOR}{command}"
         )
