@@ -47,6 +47,9 @@ def get_partition_scheme() -> list[Partition]:
     Obtain all mountpoints with partitions.
     Output will be stored in a dictionary
     """
+    if questions.confirm("Do you wish to drop to shell before configuring partition scheme?"):
+        commands.drop_to_shell()
+
     part_scheme = []
     root_partition = questions.path(
         f"Enter {constants.CMD_COLOR}/{constants.RESET_COLOR} partition path (usually /dev/sdXY)",
@@ -100,3 +103,25 @@ def partition_disk():
     # TODO: Automate partitioning
     print(f"{constants.INFO_COLOR}Please partition the disks manually")
     commands.drop_to_shell()
+
+
+def format_partitions(partitions: list[Partition]):
+    """Properly format given partitions accordingly to their mountpoint."""
+    print(
+        f"{constants.INFO_COLOR}Running automated partition formatter. "
+        "This will apply EXT4 formatting to each partition apart from SWAP "
+        "and EFI (which will be FAT32)."
+    )
+    print(f"{constants.WARN_COLOR}If you want to use a different formatting "
+          "or if your partitions are already pre-formatted, do not proceed with the "
+          "automated partition formatter!"
+          )
+
+    if questions.confirm(
+        "Do you wish to drop to shell and format your partitions manually? (will skip automated formatter)"
+    ):
+        commands.drop_to_shell()
+
+
+def mount_partitions(mountpoint: Path, partitions: list[Partition]):
+    pass
