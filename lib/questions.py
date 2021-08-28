@@ -79,6 +79,8 @@ def multi_choice(message: str, choices: list[Any], name: str = "choice") -> list
 def path(message: str, name: str = "path", exists: bool = True, make_absolute: bool = True) -> Path:
     while True:
         value = Path(input(f"{PREFIX} {message}: "))
+        if value == "":
+            print(f"{PREFIX_FAIL} '{value}' is not a valid {name}.")
         if exists and not value.exists():
             print(f"{PREFIX_FAIL} '{value}' is not a valid {name}.")
             continue
