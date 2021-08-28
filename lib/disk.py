@@ -11,14 +11,35 @@ class Partition:
         self.is_swap = is_swap
         self.is_efi = is_efi
 
+        if self.mountpoint is not None and self.is_swap:
+            raise ValueError("Swap partitions can't have a hard-coded mountpoint")
+        if self.mountpoint == "/" and self.is_efi:
+            raise ValueError("EFI partition can't have a mountpoint of '/' (root)")
+
+    def as_tuple(self) -> tuple:
+        """Get the partition in a form of a tuple."""
+        if self.mountpoint == "/":
+            return (self.path, "ROOT (/)")
+        elif self.is_efi:
+            return (self.path, f"EFI ({self.mountpoint})")
+        elif self.is_swap:
+            return (self.path, "SWAP (-)")
+        else:
+            return (self.path, self.mountpoint)
+
+    def __str__(self) -> str:
+        part_tuple = self.as_tuple()
+        return f"{part_tuple[0]}: {part_tuple[1]}"
+
     def __repr__(self) -> str:
-        part_repr = f"<Partition {self.path}: mountpoint={self.mountpoint}"
-        if self.is_swap:
-            part_repr += " swap=True"
-        if self.is_efi:
-            part_repr += " EFI=True"
-        part_repr += ">"
-        return part_repr
+        return f"<Partition {str(self)}>"
+
+    @staticmethod
+    def print_partition_table(partitions: list["Partition"], indent: int = 0):
+        """Nicely print a table of multiple partitions and their details."""
+        table_lines = [str(partition) for partition in partitions]
+        for line in table_lines:
+            print(" " * indent + line)
 
 
 def get_partition_scheme() -> list[Partition]:
@@ -33,7 +54,7 @@ def get_partition_scheme() -> list[Partition]:
     part_scheme.append(Partition(root_partition, mountpoint=Path("/")))
 
     if constants.IS_EFI:
-        efi_partition = questions.path("Enter the partition path for the EFI partition.")
+        efi_partition = questions.path("Enter the partition path for the EFI partition (usually /dev/sdXY)")
         efi_mountpoint = questions.choice(
             "Which mountpoint do you want to use for the EFI partition?",
             choices=[Path("/boot"), Path("/efi"), "Other"]
@@ -48,8 +69,8 @@ def get_partition_scheme() -> list[Partition]:
 
     while True:
         if questions.confirm("Do you want to define some other mountpoint?"):
-            mountpoint = questions.path("Enter the mountpoint (on new machine): ", exists=False)
             partition = questions.path("Enter the partition path (usually /dev/sdXY): ")
+            mountpoint = questions.path("Enter the mountpoint (on new machine): ", exists=False)
 
             for existing_partition in part_scheme:
                 if existing_partition.path == partition:
@@ -64,7 +85,9 @@ def get_partition_scheme() -> list[Partition]:
         else:
             break
 
-    print(f"{constants.INFO_COLOR}Your current partition table scheme:\n{part_scheme}")
+    print(f"{constants.INFO_COLOR}Your current partition table scheme:")
+    Partition.print_partition_table(part_scheme, indent=4)
+
     if questions.confirm("Does this look correct?"):
         return part_scheme
     else:
