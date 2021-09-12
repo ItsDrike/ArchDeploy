@@ -1,8 +1,13 @@
 import os
+import pathlib
 import sys
 import subprocess
 
 from lib import constants, questions
+
+# Find proper command for root cmd execution
+HAS_SUDO = pathlib.Path("/usr/bin/sudo").exists()
+HAS_DOAS = pathlib.Path("/usr/bin/doas").exists()
 
 
 def debug_confirm_run(command: str) -> bool:
@@ -38,7 +43,21 @@ def run_cmd(cmd: str, capture_out: bool = False, enable_debug: bool = True) -> s
 def run_root_cmd(cmd: str, capture_out: bool = False, enable_debug: bool = True) -> subprocess.CompletedProcess:
     """Run given command as root."""
     if os.getuid() != 0:
-        return run_cmd(f"sudo {cmd}", capture_out, enable_debug)
+        # Use available root escalation tool to run given cmd
+        if HAS_SUDO:
+            root_cmd = f"sudo {cmd}"
+        elif HAS_DOAS:
+            root_cmd = f"doas {cmd}"
+        else:
+            # We need to escape double quotes here, because we use them with su command
+            print(
+                f"{constants.DEBUG_COLOR}Neither sudo nor doas were found, falling back "
+                "to su to execute root commands (enter root password, not user password)"
+            )
+            cmd = cmd.replace('"', r'\"')
+            root_cmd = f'su -c "{cmd}"'
+
+        return run_cmd(root_cmd, capture_out, enable_debug)
     else:
         return run_cmd(cmd, capture_out, enable_debug)
 
