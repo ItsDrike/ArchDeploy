@@ -27,6 +27,18 @@ class Partition:
         else:
             return (self.path, self.mountpoint)
 
+    def format(self):
+        """Perform all necessary actions for formatting given partition."""
+        if self.is_swap:
+            commands.run_root_cmd(f"mkswap {self.path}")
+            commands.run_root_cmd(f"swapon {self.path}")
+            return
+        if self.is_efi:
+            commands.run_root_cmd(f"mkfs.fat -F32 {self.path}")
+            return
+        commands.run_root_cmd(f"mkfs.ext4 {self.path}")
+        return
+
     def __str__(self) -> str:
         part_tuple = self.as_tuple()
         return f"{part_tuple[0]}: {part_tuple[1]}"
@@ -105,7 +117,7 @@ def partition_disk():
     commands.drop_to_shell()
 
 
-def format_partitions(partitions: list[Partition]):
+def format_partitions(partitions: list[Partition]) -> None:
     """Properly format given partitions accordingly to their mountpoint."""
     print(
         f"{constants.INFO_COLOR}Running automated partition formatter. "
@@ -121,6 +133,14 @@ def format_partitions(partitions: list[Partition]):
         "Do you wish to drop to shell and format your partitions manually? (will skip automated formatter)"
     ):
         commands.drop_to_shell()
+        if questions.confirm(
+            "Did you create a filesystem on all of the partitions and created and activated swap (if you have swap)?"
+        ):
+            return
+        return format_partitions(partitions)
+
+    for partition in partitions:
+        partition.format()
 
 
 def mount_partitions(mountpoint: Path, partitions: list[Partition]):
