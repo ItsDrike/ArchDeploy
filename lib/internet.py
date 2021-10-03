@@ -5,20 +5,22 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Literal, Union
+from enum import Enum
 import textwrap
 
 from lib import commands, constants, questions
 
 
+class InterfaceType(Enum):
+    UNKNOWN = "UNKNOWN"
+    PHYSICAL = "PHYSICAL"
+    WIRELESS = "WIRELESS"
+    TUNTAP = "TUN/TAP"
+    BRIDGE = "BRIDGE"
+
+
 class Interface:
     """Network interface/device class."""
-    INTERFACE_TYPES = Union[
-        Literal["UNKNOWN"],
-        Literal["PHYSICAL"],
-        Literal["WIRELESS"],
-        Literal["TUN/TAP"],
-        Literal["BRIDGE"]
-    ]
 
     def __init__(self, name: str):
         self.name = name
@@ -26,19 +28,19 @@ class Interface:
         self.type = self.get_type(self.path)
 
     @staticmethod
-    def get_type(path: Path) -> "Interface.INTERFACE_TYPES":
+    def get_type(path: Path) -> InterfaceType:
         """Get the type of interface based on its path."""
         if path.joinpath("bridge").is_dir():
-            return "BRIDGE"
+            return InterfaceType.BRIDGE
         elif path.joinpath("tun_flags").is_file():
-            return "TUN/TAP"
+            return InterfaceType.TUNTAP
         elif path.joinpath("device").is_dir():
             if path.joinpath("wireless").is_dir():
-                return "WIRELESS"
+                return InterfaceType.WIRELESS
             else:
-                return "PHYSICAL"
+                return InterfaceType.PHYSICAL
         else:
-            return "UNKNOWN"
+            return InterfaceType.UNKNOWN
 
     def is_up(self) -> bool:
         """Check if the interface is UP."""
