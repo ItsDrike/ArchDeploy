@@ -1,10 +1,43 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from lib import constants
 
 PREFIX = f"[{constants.CMD_COLOR}?{constants.RESET_COLOR}]{constants.QUESTION_COLOR}"
 PREFIX_FAIL = f"{constants.ERROR_COLOR}>>{constants.QUESTION_COLOR}"
+
+
+def text(
+        message: str,
+        name: str = "value",
+        default: Optional[str] = None,
+        allow_blank: bool = False
+    ) -> str:
+    if default is not None and allow_blank:
+        raise ValueError("Can't allow blanks with a default value (entering blank means default)")
+
+    ask_txt = f"{PREFIX} {message}"
+    if default is not None:
+        ask_txt += f" ({default=})"
+    ask_txt += ": "
+
+    while True:
+        value = input(f"{PREFIX} {message} ({default=}): ")
+        # If we don't have a default value but we allow blanks
+        # return a blank string
+        if value == "" and default is None and allow_blank:
+            return ""
+        # If we don't have a default value and blanks aren't allowed
+        # ask for a valid value again.
+        elif value == "" and default is None and not allow_blank:
+            print("Value can't be blank.")
+            continue
+        # If we have a default value and the user didn't enter anything
+        # return the default value
+        elif value == "" and default is not None:
+            return default
+
+        return value
 
 
 def confirm(message: str, name: str = "value", default: bool = False) -> bool:
